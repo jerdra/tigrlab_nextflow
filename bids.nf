@@ -9,6 +9,7 @@ engine = new groovy.text.SimpleTemplateEngine()
 toprint = engine.createTemplate(usage.text).make(bindings)
 printhelp = params.help
 
+println(params.pmap)
 if (!params.simg){
 
     log.info('Singularity container not specified!')
