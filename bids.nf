@@ -1,3 +1,5 @@
+nextflow.preview.dsl = 2
+
 usage = file("${workflow.scriptFile.getParent()}/usage/bids_usage")
 bindings = [ "rewrite":"$params.rewrite",
              "subjects":"$params.subjects",
@@ -9,159 +11,31 @@ engine = new groovy.text.SimpleTemplateEngine()
 toprint = engine.createTemplate(usage.text).make(bindings)
 printhelp = params.help
 
-if (!params.simg){
+// Input checking and validation
+req_param = ["--bids" : params.bids,
+             "--simg" : params.simg,
+             "--license": params.license,
+             "--descriptor": params.descriptor,
+             "--invocation": params.invocation,
+             "--out": params.out]
 
-    log.info('Singularity container not specified!')
-    log.info('Need --simg argument in Nextflow Call!')
+missing_arg = req_param.grep{ (it.value == null || it.value == "") }
+if (missing_arg){
+    log.error("Missing required argument(s)!")
+    missing_arg.each{ log.error("Missing ${it.key}") }
     printhelp = true
-
-}
-
-if (!params.bids || !params.out) {
-
-    log.info('Insufficient specification!')
-    log.info('Need  --bids, --out!')
-    printhelp = true
-
-}
-
-if (!params.application) {
-
-    params.application="kimel_bidsapp"
-
-}
-
-if (!params.invocation || !params.descriptor) {
-
-    log.info('Missing BOSH invocation and descriptor JSONs!')
-    log.info('Exiting with Error')
-    printhelp = true
-
-}
-
-if (!params.rewrite) {
-
-    log.info("--rewrite flag not used, will skip existing outputs")
-
-}else{
-
-    log.info("--rewrite flag is on! Will re-run on existing outputs!")
-    log.info("If you want to completely re-run, please delete subject output")
-
-}
-
-if (params.subjects) {
-
-    log.info("Subject file provided: $params.subjects")
-
 }
 
 if (printhelp){
-    print(toprint)
-    System.exit(0)
+   print(toprint)
+   System.exit(0)
 }
 
-log.info("BIDS Directory: $params.bids")
-log.info("Output directory: $params.out")
-log.info("Using Descriptor File: $params.descriptor")
-log.info("Using Invocation File: $params.invocation")
-
-// Main Processes
-
-all_dirs = file(params.bids).list()
-invalid_channel = Channel.create()
-sub_channel = Channel.create()
-
-// Store all subjects
-input_dirs = new File(params.bids).list()
-output_dirs = new File(params.out).list()
-
-// Filter if rewrite
-if (!params.rewrite){
-
-    to_run = input_dirs.findAll { !(output_dirs.contains(it)) }
-
-}else{
-
-    to_run = input_dirs
-
-}
-
-bids_channel = Channel
-                    .from(to_run)
-                    .filter { it.contains('sub-') }
-
-// Process subject list
-if (params.subjects){
-
-
-    //Load in sublist
-    sublist = file(params.subjects)
-    input_sub_channel = Channel.from(sublist)
-                               .splitText() { it.strip() }
-
-    process split_invalid{
-
-        publishDir "$params.out/pipeline_logs/$params.application/", \
-                 mode: 'copy', \
-                 saveAs: { 'invalid_subjects.log' }, \
-                 pattern: 'invalid'
-
-        input:
-        val subs from input_sub_channel.collect()
-        val available_subs from bids_channel.collect()
-
-        output:
-        file 'valid' into valid_subs
-        file 'invalid' optional true into invalid_subs
-
-
-        """
-        #!/usr/bin/env python
-
-        import os
-        print(os.getcwd())
-
-        def nflist_2_pylist(x):
-            x = x.strip('[').strip(']')
-            x = [x.strip(' ').strip("\\n") for x in x.split(',')]
-            return x
-
-        #Process full BIDS subjects
-        bids_subs = nflist_2_pylist("$available_subs")
-        input_subs = nflist_2_pylist("$subs")
-
-        print(input_subs)
-        valid_subs = [x for x in input_subs if x in bids_subs]
-        invalid_subs = [x for x in input_subs if x not in valid_subs]
-
-        with open('valid','w') as f:
-            f.writelines("\\n".join(valid_subs))
-
-        if invalid_subs:
-
-            with open('invalid','w') as f:
-                f.writelines("\\n".join(invalid_subs))
-                f.write("\\n")
-
-        """
-
-    }
-
-    sub_channel = valid_subs
-                        .splitText() { it.strip() }
-}else{
-
-    bids_channel.into(sub_channel)
-
-}
 
 process save_invocation{
 
-    // Push input file into output folder
-
     input:
-    file invocation from Channel.fromPath("$params.invocation")
+    path invocation
 
     shell:
     '''
@@ -186,13 +60,14 @@ process save_invocation{
     '''
 }
 
+
 process modify_invocation{
 
     input:
-    val sub from sub_channel
 
+    val sub
     output:
-    file "${sub}.json" into invoke_json
+    path "${sub}.json", emit: json
 
     """
 
@@ -217,13 +92,11 @@ process modify_invocation{
     """
 }
 
+
 process run_bids{
 
     input:
-    file sub_input from invoke_json
-
-    output:
-    val 'pseudo_output' into pseudo_output
+    path sub_input
 
     beforeScript "source /etc/profile"
     scratch true
@@ -269,4 +142,48 @@ process run_bids{
                                            1>> ${log_err}
 
     '''
+}
+
+// Helpful logging information
+log.info("BIDS Directory: $params.bids")
+log.info("Output directory: $params.out")
+log.info("Using Descriptor File: $params.descriptor")
+log.info("Using Invocation File: $params.invocation")
+
+// Pull subjects available in BIDS directory
+all_dirs = file(params.bids).list()
+input_dirs = new File(params.bids).list()
+output_dirs = new File(params.out).list()
+
+// If subject file is provided
+input_channel = Channel.fromPath("$params.bids/sub-*", type: 'dir')
+                       .map { i -> i.getBaseName() }
+
+// If using --subjects, apply filter
+if (params.subjects){
+    subjects_channel = Channel.fromPath(params.subjects)
+                               .splitText() { it.strip() }
+    input_channel = input_channel.join(subjects_channel)
+}
+
+if (!params.rewrite){
+
+    // The "o" trick is to ensure that nulls get placed
+    // in it[1] when joining
+    out_channel = Channel.fromPath("$params.out/sub-*", type: 'dir')
+                        .map{ o -> [o.getBaseName(), "o"] }
+                        .ifEmpty(['', "o"])
+
+    input_channel = input_channel.join(out_channel, remainder: true)
+                                 .filter{it.last() == null}
+                                 .map{ i,n -> i }
+}
+
+
+workflow {
+
+    main:
+    save_invocation(params.invocation)
+    modify_invocation(input_channel)
+    run_bids(modify_invocation.out.json)
 }
