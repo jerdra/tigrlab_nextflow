@@ -67,7 +67,7 @@ process modify_invocation{
 
     val sub
     output:
-    path "${sub}.json", emit: json
+    tuple val(sub), path("${sub}.json"), emit: json
 
     """
 
@@ -95,8 +95,12 @@ process modify_invocation{
 
 process run_bids{
 
+    // Dynamic evaluation
+    time { params.cluster_time(s) }
+    queue { params.cluster_queue(params.cluster_time(s)) }
+
     input:
-    path sub_input
+    tuple path(sub_input), val(s)
 
     beforeScript "source /etc/profile"
     scratch true
@@ -177,7 +181,20 @@ if (!params.rewrite){
 workflow {
 
     main:
+
+    // Pull # of sessions per subject
+    sub_ses_channel = input_channel
+                        .map{ s ->[
+                                   s,
+                                   new File("$params.bids/$s/").listFiles().size()
+                                  ]
+                            }
+
     save_invocation(params.invocation)
     modify_invocation(input_channel)
-    run_bids(modify_invocation.out.json)
+
+    run_bids_input = modify_invocation.out.json
+                                .join(sub_ses_channel, by: 0)
+                                .map { s,i,n -> [i, n] }
+    run_bids(run_bids_input)
 }
