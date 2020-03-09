@@ -150,12 +150,6 @@ log.info("Output directory: $params.out")
 log.info("Using Descriptor File: $params.descriptor")
 log.info("Using Invocation File: $params.invocation")
 
-// Pull subjects available in BIDS directory
-all_dirs = file(params.bids).list()
-input_dirs = new File(params.bids).list()
-output_dirs = new File(params.out).list()
-
-// If subject file is provided
 input_channel = Channel.fromPath("$params.bids/sub-*", type: 'dir')
                        .map { i -> i.getBaseName() }
 
