@@ -1,3 +1,4 @@
+
 nextflow.preview.dsl = 2
 
 usage = file("${workflow.scriptFile.getParent()}/usage/bids_usage")
@@ -95,9 +96,8 @@ process modify_invocation{
 
 process run_bids{
 
-    // Dynamic evaluation
     time { params.cluster_time(s) }
-    queue { params.cluster_queue(params.cluster_time(s)) }
+    queue { params.cluster_queue(s) }
 
     input:
     tuple path(sub_input), val(s)
@@ -105,7 +105,6 @@ process run_bids{
     beforeScript "source /etc/profile"
     scratch true
 
-    module 'slurm'
     shell:
     '''
 
@@ -177,7 +176,6 @@ if (!params.rewrite){
                                  .map{ i,n -> i }
 }
 
-
 workflow {
 
     main:
@@ -195,6 +193,6 @@ workflow {
 
     run_bids_input = modify_invocation.out.json
                                 .join(sub_ses_channel, by: 0)
-                                .map { s,i,n -> [i, n] }
+                                .map { s,i,n -> [i, n]}
     run_bids(run_bids_input)
 }
