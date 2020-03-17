@@ -45,7 +45,7 @@ process apply_n4{
     t1=$(basename !{t1})
     sub_w_desc=${t1%.nii.gz}
     python /scripts/process_file.py !{t1} !{params.bspline} !{params.niter}
-    mv n4_wf/corrected_img/${sub_w_series_desc}_corrected.nii.gz .
+    mv n4_wf/corrected_img/${sub_w_desc}_corrected.nii.gz .
     '''
 
 }
