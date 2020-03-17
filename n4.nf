@@ -31,7 +31,7 @@ process apply_n4{
     publishDir "$params.out/$params.application/$sub", \
                 mode: 'copy', \
                 pattern: "${sub}*_corrected.nii.gz", \
-                saveAs: { it.getName().replace("_corrected.nii.gz", "_n4.nii.gz") }
+                saveAs: { it.replace("_corrected.nii.gz", "_n4.nii.gz") }
 
 
     input:
