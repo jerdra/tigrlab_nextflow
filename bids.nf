@@ -103,22 +103,13 @@ process run_bids{
     tuple path(sub_input), val(s)
 
     beforeScript "source /etc/profile"
-    scratch true
+    scratch params.scratchDir
 
     shell:
     '''
 
     #Stop error rejection
     set +e
-
-    echo !{sub_input}
-
-    echo bosh exec launch \
-    -v !{params.bids}:/bids \
-    -v !{params.out}:/output \
-    -v !{params.license}:/license \
-    !{params.descriptor} $(pwd)/!{sub_input} \
-    --imagepath !{params.simg} -x --stream
 
     #Make logging folder
     logging_dir=!{params.out}/pipeline_logs/!{params.application}
@@ -136,10 +127,12 @@ process run_bids{
     echo "TASK ATTEMPT !{task.attempt}" >> ${log_err}
     echo "============================" >> ${log_err}
 
+    mkdir work
     bosh exec launch \
     -v !{params.bids}:/bids \
     -v !{params.out}:/output \
     -v !{params.license}:/license \
+    -v $(pwd)/work:/work \
     !{params.descriptor} $(pwd)/!{sub_input} \
     --imagepath !{params.simg} -x --stream 2>> ${log_out} \
                                            1>> ${log_err}
@@ -152,6 +145,7 @@ log.info("BIDS Directory: $params.bids")
 log.info("Output directory: $params.out")
 log.info("Using Descriptor File: $params.descriptor")
 log.info("Using Invocation File: $params.invocation")
+log.info("Using scratch directory: $params.scratchDir")
 
 input_channel = Channel.fromPath("$params.bids/sub-*", type: 'dir')
                        .map { i -> i.getBaseName() }
