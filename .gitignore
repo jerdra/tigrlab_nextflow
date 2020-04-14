@@ -7,3 +7,9 @@ test*
 work
 debug
 demo
+.python-version
+docs/build/*
+docs/build
+.nextflow*
+tests
+.nfs*

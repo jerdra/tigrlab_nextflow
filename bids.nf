@@ -1,88 +1,74 @@
-// INPUT SPECIFICATION
-// Don't use study, allow input to be specified freely
 
-if (!params.simg){
-    println('Singularity container not specified!')
-    println('Need --simg argument in Nextflow Call!')
-    System.exit(1)
+nextflow.preview.dsl = 2
 
+usage = file("${workflow.scriptFile.getParent()}/usage/bids_usage")
+bindings = [ "rewrite":"$params.rewrite",
+             "subjects":"$params.subjects",
+             "simg":"$params.simg",
+             "descriptor":"$params.descriptor",
+             "invocation":"$params.invocation",
+             "license":"$params.license"]
+engine = new groovy.text.SimpleTemplateEngine()
+toprint = engine.createTemplate(usage.text).make(bindings)
+printhelp = params.help
+
+// Input checking and validation
+req_param = ["--bids" : params.bids,
+             "--simg" : params.simg,
+             "--license": params.license,
+             "--descriptor": params.descriptor,
+             "--invocation": params.invocation,
+             "--out": params.out]
+
+missing_arg = req_param.grep{ (it.value == null || it.value == "") }
+if (missing_arg){
+    log.error("Missing required argument(s)!")
+    missing_arg.each{ log.error("Missing ${it.key}") }
+    printhelp = true
 }
 
-if (!params.bids || !params.out) {
-
-    println('Insufficient specification!')
-    println('Need  --bids, --out!')
-    System.exit(1)
-
-}
-
-println("BIDS Directory: $params.bids")
-println("Output directory: $params.out")
-
-//If params.application not specified, then use default bids_app
-if (!params.application) {
-
-    params.application="kimel_bidsapp"
-
-}
-
-// CHECK INVOCATION
-if (!params.invocation || !params.descriptor) {
-
-    println('Missing BOSH invocation and descriptor JSONs!')
-    println('Exiting with Error')
-    System.exit(1)
-
-
-}else {
-
-    println("Using Descriptor File: $params.descriptor")
-    println("Using Invocation File: $params.invocation")
-
-}
-
-// Final Subjects check
-
-if (params.subjects) {
-
-    println("Subject file provided: $params.subjects")
-
+if (printhelp){
+   print(toprint)
+   System.exit(0)
 }
 
 
-//////////////////////////////////////////////////////////////
+process save_invocation{
 
-// Main Processes
+    input:
+    path invocation
 
-all_dirs = file(params.bids)
+    shell:
+    '''
 
-if (!params.subjects){
+    invoke_name=$(basename !{params.invocation})
+    invoke_name=${invoke_name%.json}
+    datestr=$(date +"%d-%m-%Y")
 
-bids_channel = Channel
-                    .from(all_dirs.list())
-                    .filter { it.contains('sub-') }
+    # If file with same date is available, check if they are the same
+    if [ -f !{params.out}/${invoke_name}_${datestr}.json ]; then
 
-}else {
+        DIFF=$(diff !{params.invocation} !{params.out}/${invoke_name}_${datestr}.json)
 
-sublist=file("$params.subjects")
-bids_channel = Channel
-                    .from(sublist)
-                    .splitText() { it.strip() }
-                    .filter { it.contains('sub-') }
+        if [ "$DIFF" != "" ]; then
+            >&2 echo "Error invocations have identical names but are not identical!"
+            exit 1
+        fi
+
+    else
+        cp -n !{params.invocation} !{params.out}/${invoke_name}_${datestr}.json
+    fi
+    '''
 }
 
 
 process modify_invocation{
-    
-    // Takes a BIDS subject identifier
-    // Modifies the template invocation json and outputs
-    // subject specific invocation
 
     input:
-    val sub from bids_channel
 
+    val sub
     output:
-    file "${sub}.json" into invoke_json
+    tuple val(sub), path("${sub}.json"), emit: json
 
     """
 
@@ -93,62 +79,115 @@ process modify_invocation{
 
     out_file = '${sub}.json'
     invoke_file = '${params.invocation}'
+
     x = '${sub}'.replace('sub-','')
 
     with open(invoke_file,'r') as f:
         j_dict = json.load(f)
-    
+
     j_dict.update({'participant_label' : [x]})
 
     with open(out_file,'w') as f:
         json.dump(j_dict,f,indent=4)
 
-    """ 
-    
-
+    """
 }
+
 
 process run_bids{
 
-    input:
-    file sub_input from invoke_json
+    time { params.cluster_time(s) }
+    queue { params.cluster_queue(s) }
 
-    output:
-    file '.command.*' into logs
+    input:
+    tuple path(sub_input), val(s)
 
     beforeScript "source /etc/profile"
-    scratch true
-
-    publishDir "$params.out/pipeline_logs", \
-                 mode: 'copy', \
-                 saveAs: { "$sub_input".replace('.json','.out')}, \
-                 pattern: '.command.out'
-
-    publishDir "$params.out/pipeline_logs", \
-                 mode: 'copy', \
-                 saveAs: { "$sub_input".replace('.json','.err')}, \
-                 pattern: '.command.err'
-
-    module 'slurm'
+    scratch params.scratchDir
+    stageInMode 'copy'
 
     shell:
     '''
 
-    application=!{params.application}
+    #Stop error rejection
+    set +e
 
-    echo bosh exec launch \
-    -v !{params.bids}:/bids \
-    -v !{params.out}:/output \
-    -v !{params.license}:/license \
-    !{params.descriptor} $(pwd)/!{sub_input} \
-    --imagepath !{params.simg} -x --stream
+    #Make logging folder
+    logging_dir=!{params.out}/pipeline_logs/!{params.application}
+    mkdir -p ${logging_dir}
 
+    #Set up logging output
+    sub_json=!{sub_input}
+    sub=${sub_json%.json}
+    log_out=${logging_dir}/${sub}.out
+    log_err=${logging_dir}/${sub}.err
+
+
+    echo "TASK ATTEMPT !{task.attempt}" >> ${log_out}
+    echo "============================" >> ${log_out}
+    echo "TASK ATTEMPT !{task.attempt}" >> ${log_err}
+    echo "============================" >> ${log_err}
+
+    mkdir work
     bosh exec launch \
     -v !{params.bids}:/bids \
     -v !{params.out}:/output \
     -v !{params.license}:/license \
+    -v $(pwd)/work:/work \
     !{params.descriptor} $(pwd)/!{sub_input} \
-    --imagepath !{params.simg} -x --stream
+    --imagepath !{params.simg} -x --stream 2>> ${log_out} \
+                                           1>> ${log_err}
 
     '''
+}
+
+// Helpful logging information
+log.info("BIDS Directory: $params.bids")
+log.info("Output directory: $params.out")
+log.info("Using Descriptor File: $params.descriptor")
+log.info("Using Invocation File: $params.invocation")
+log.info("Using scratch directory: $params.scratchDir")
+
+input_channel = Channel.fromPath("$params.bids/sub-*", type: 'dir')
+                       .map { i -> i.getBaseName() }
+
+// If using --subjects, apply filter
+if (params.subjects){
+    subjects_channel = Channel.fromPath(params.subjects)
+                               .splitText() { it.strip() }
+    input_channel = input_channel.join(subjects_channel)
+}
+
+if (!params.rewrite){
+
+    // The "o" trick is to ensure that nulls get placed
+    // in it[1] when joining
+    out_channel = Channel.fromPath("$params.out/sub-*", type: 'dir')
+                        .map{ o -> [o.getBaseName(), "o"] }
+                        .ifEmpty(['', "o"])
+
+    input_channel = input_channel.join(out_channel, remainder: true)
+                                 .filter{it.last() == null}
+                                 .map{ i,n -> i }
+}
+
+workflow {
+
+    main:
+
+    // Pull # of sessions per subject
+    sub_ses_channel = input_channel
+                        .map{ s ->[
+                                   s,
+                                   new File("$params.bids/$s/").listFiles().size()
+                                  ]
+                            }
+
+    save_invocation(params.invocation)
+    modify_invocation(input_channel)
+
+    run_bids_input = modify_invocation.out.json
+                                .join(sub_ses_channel, by: 0)
+                                .map { s,i,n -> [i, n]}
+    run_bids(run_bids_input)
 }

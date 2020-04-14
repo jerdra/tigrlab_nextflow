@@ -1,0 +1,29 @@
+Fieldmaps Nextflow Pipeline
+==============================
+
+Run the FieldMaps preprocessing pipeline on Datman subjects
+
+USAGE
+
+nextflow run fieldmaps.nf [options...] --study STUDY --out OUTDIR
+
+DESCRIPTION
+	--study		Datman study ID
+	--out		Output directory
+
+OPTIONAL
+	--rewrite	Overwrite existing subject output directories
+			($rewrite)
+	--echo1		Echo 1 Datman Tag
+			($echo1)
+	--echo2		Echo 2 Datman Tag
+			($echo2)
+	--help		Print this usage log
+
+SUPPORTED PROFILES
+	-profile kimel	Run on Kimel cluster
+	-profile scc	Run on SCC cluster
+	-profile local	Run on local cluster
+
+NOTES
+Will automatically downsample if one ECHO map has a higher resolution than another
