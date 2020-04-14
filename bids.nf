@@ -104,6 +104,7 @@ process run_bids{
 
     beforeScript "source /etc/profile"
     scratch params.scratchDir
+    stageInMode 'copy'
 
     shell:
     '''
