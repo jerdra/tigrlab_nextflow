@@ -12,3 +12,4 @@ docs/build/*
 docs/build
 .nextflow*
 tests
+.nfs*

@@ -28,3 +28,6 @@ To go through a quick example that you can run yourself, check out the quickstar
    getting_started
    quickstart_tutorial
    quick_reference
+   not_bids
+   features
+   changelog
