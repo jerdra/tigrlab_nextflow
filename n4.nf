@@ -69,9 +69,10 @@ if (params.subjects){
 }
 
 if (!params.rewrite){
-    out_channel = Channel.fromPath("$params.out/*", type: "dir")
+    out_channel = Channel.fromPath("$params.out/$params.application/*", type: "dir")
                         .map{ o -> [o.getBaseName(), "o"] }
                         .ifEmpty(['', "o"])
+
     nii_channel = nii_channel.join(out_channel, remainder:true)
                              .filter{it.contains(null)}
                              .map { i,p,n -> [i,p] }
