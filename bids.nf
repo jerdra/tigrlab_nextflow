@@ -162,7 +162,7 @@ if (!params.rewrite){
 
     // The "o" trick is to ensure that nulls get placed
     // in it[1] when joining
-    out_channel = Channel.fromPath("$params.out/sub-*", type: 'dir')
+    out_channel = Channel.fromPath("$params.out/$params.application/sub-*", type: 'dir')
                         .map{ o -> [o.getBaseName(), "o"] }
                         .ifEmpty(['', "o"])
 
