@@ -110,7 +110,7 @@ process gen_confounds{
 }
 
 // Implement logic to filter subjects
-input_channel = Channel.fromPath("$params.fmriprep/*", type: "dir")
+input_channel = Channel.fromPath("$params.fmriprep/sub-*", type: "dir")
                     .map{ i -> [i.getBaseName(), i] }
 
 // Filter subjects
