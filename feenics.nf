@@ -1,5 +1,5 @@
 
-usage = file("${baseDir.getParent()}/usage/feenics_usage"
+usage = file("${baseDir}/usage/feenics_usage")
 bindings = [ "rewrite":"$params.rewrite",
              "preartifact":"$params.preartifact",
              "simg":"$params.simg"]

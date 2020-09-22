@@ -91,7 +91,7 @@ process gen_confounds{
     tuple val(sub), val(ses),\
     path(t1), path(t1_bm),\
     path(wm), path(csf),\
-    path(func), path(func_bm),\
+    path(func), path(func_bm), path(func_json),\
     val(base)
 
     output:
@@ -103,11 +103,12 @@ process gen_confounds{
     '''
     PYTHONPATH=/scripts
     /scripts/confounds.py $(pwd)/!{t1} $(pwd)/!{t1_bm} $(pwd)/!{wm} $(pwd)/!{csf} \
-                         $(pwd)/!{func} $(pwd)/!{func_bm} --workdir $(pwd) \
-                         $(pwd)/!{base}
+                         $(pwd)/!{func} $(pwd)/!{func_bm} $(pwd)/!{func_json} \
+                         --workdir $(pwd) $(pwd)/!{base}
     '''
 
 }
+
 
 // Implement logic to filter subjects
 input_channel = Channel.fromPath("$params.fmriprep/sub-*", type: "dir")
@@ -162,6 +163,12 @@ workflow {
                             fmri.sort{a,b -> b.getBaseName()<=>a.getBaseName()},
                             k - remove_space].flatten()
                             }
+                        .map{sub,ses,t,tbm,wm,csf,fmri,fbm,base ->
+                            [
+                                sub,ses,t,tbm,wm,csf,fmri,fbm,
+                                fmri.replaceFirst(/nii.gz/, "json"),
+                                base
+                            ]}
 
     gen_confounds(i_gen_confounds)
 
