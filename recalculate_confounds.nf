@@ -98,6 +98,7 @@ process gen_confounds{
     tuple val(sub), path("${base}_confounds.tsv"), emit: confounds
     tuple val(sub), path("${base}_wm_roi.nii.gz"), emit: wm
     tuple val(sub), path("${base}_csf_roi.nii.gz"), emit: csf
+    tuple val(sub), path("${base}_acc_roi.nii.gz"), emit: acc
 
     shell:
     '''
