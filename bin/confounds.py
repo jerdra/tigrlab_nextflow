@@ -94,7 +94,7 @@ def main():
         pass
     wf = pe.Workflow(name='main_wf')
     wf.base_dir = main_dir
-    wf.connect([(confound_wf, ef_confounds, [('outputnode.signals', 'in_file')
+    wf.connect([(confound_wf, ef_confounds, [('outputnode.confounds_file', 'in_file')
                                              ]),
                 (confound_wf, ef_wm, [('outputnode.wm_roi', 'in_file')]),
                 (confound_wf, ef_csf, [('outputnode.csf_roi', 'in_file')]),
