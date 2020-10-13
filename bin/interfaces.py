@@ -16,10 +16,9 @@ import numpy as np
 import pandas as pd
 from nipype import logging
 from nipype.utils.filemanip import fname_presuffix
-from nipype.interfaces.base import (
-    traits, TraitedSpec, BaseInterfaceInputSpec, File, Directory, isdefined,
-    SimpleInterface
-)
+from nipype.interfaces.base import (traits, TraitedSpec,
+                                    BaseInterfaceInputSpec, File, Directory,
+                                    isdefined, SimpleInterface)
 from niworkflows.viz.plots import fMRIPlot
 
 LOGGER = logging.getLogger('nipype.interface')
@@ -94,9 +93,17 @@ class GatherConfounds(SimpleInterface):
         self._results['confounds_list'] = confounds_list
         return runtime
 
-def _gather_confounds(signals=None, dvars=None, std_dvars=None, fdisp=None,
-                      tcompcor=None, acompcor=None, cos_basis=None,
-                      motion=None, aroma=None, newpath=None):
+
+def _gather_confounds(signals=None,
+                      dvars=None,
+                      std_dvars=None,
+                      fdisp=None,
+                      tcompcor=None,
+                      acompcor=None,
+                      cos_basis=None,
+                      motion=None,
+                      aroma=None,
+                      newpath=None):
     """
     Load confounds from the filenames, concatenate together horizontally
     and save new file.
@@ -118,7 +125,6 @@ def _gather_confounds(signals=None, dvars=None, std_dvars=None, fdisp=None,
 
 
     """
-
     def less_breakable(a_string):
         ''' hardens the string to different envs (i.e. case insensitive, no whitespace, '#' '''
         return ''.join(a_string.split()).strip('#')
@@ -137,20 +143,17 @@ def _gather_confounds(signals=None, dvars=None, std_dvars=None, fdisp=None,
             right_df.index = range(index_diff,
                                    len(right_df.index) + index_diff)
         elif index_diff < 0:
-            left_df.index = range(-index_diff,
-                                  len(left_df.index) - index_diff)
+            left_df.index = range(-index_diff, len(left_df.index) - index_diff)
 
     all_files = []
     confounds_list = []
-    for confound, name in ((signals, 'Global signals'),
-                           (std_dvars, 'Standardized DVARS'),
-                           (dvars, 'DVARS'),
-                           (fdisp, 'Framewise displacement'),
-                           (tcompcor, 'tCompCor'),
-                           (acompcor, 'aCompCor'),
+    for confound, name in ((signals, 'Global signals'), (std_dvars,
+                                                         'Standardized DVARS'),
+                           (dvars, 'DVARS'), (fdisp, 'Framewise displacement'),
+                           (tcompcor, 'tCompCor'), (acompcor, 'aCompCor'),
                            (cos_basis, 'Cosine basis'),
-                           (motion, 'Motion parameters'),
-                           (aroma, 'ICA-AROMA')):
+                           (motion, 'Motion parameters'), (aroma,
+                                                           'ICA-AROMA')):
         if confound is not None and isdefined(confound):
             confounds_list.append(name)
             if os.path.exists(confound) and os.stat(confound).st_size > 0:
@@ -160,7 +163,9 @@ def _gather_confounds(signals=None, dvars=None, std_dvars=None, fdisp=None,
     for file_name in all_files:  # assumes they all have headings already
         new = pd.read_csv(file_name, sep="\t")
         for column_name in new.columns:
-            new.rename(columns={column_name: camel_to_snake(less_breakable(column_name))},
+            new.rename(columns={
+                column_name: camel_to_snake(less_breakable(column_name))
+            },
                        inplace=True)
 
         _adjust_indices(confounds_data, new)
@@ -170,7 +175,6 @@ def _gather_confounds(signals=None, dvars=None, std_dvars=None, fdisp=None,
         newpath = os.getcwd()
 
     combined_out = os.path.join(newpath, 'confounds.tsv')
-    confounds_data.to_csv(combined_out, sep='\t', index=False,
-                          na_rep='n/a')
+    confounds_data.to_csv(combined_out, sep='\t', index=False, na_rep='n/a')
 
     return combined_out, confounds_list
