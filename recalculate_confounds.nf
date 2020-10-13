@@ -81,11 +81,6 @@ process fast{
 process gen_confounds{
 
     label 'fmriprep'
-    stageInMode 'copy'
-    publishDir path: "$params.fmriprep/$sub/$ses/func",\
-               pattern: "*confounds.tsv",\
-               saveAs: { f -> "${base}_desc-confounds_regressors_fixed.tsv" },\
-               mode: 'copy'
 
     input:
     tuple val(sub), val(ses),\
@@ -95,9 +90,11 @@ process gen_confounds{
     val(base)
 
     output:
-    tuple val(sub), path("${base}_confounds.tsv"), emit: confounds
-    tuple val(sub), path("${base}_wm_roi.nii.gz"), emit: wm
-    tuple val(sub), path("${base}_csf_roi.nii.gz"), emit: csf
+    tuple val(sub), val(base),  path("${base}_new_confounds.tsv"), emit: confounds
+    tuple val(sub), val(base),  path("${base}_new_confounds.json"), emit: confounds_metadata
+    tuple val(sub), val(base),  path("${base}_wm_roi.nii.gz"), emit: wm
+    tuple val(sub), val(base),  path("${base}_csf_roi.nii.gz"), emit: csf
+    tuple val(sub), val(base),  path("${base}_acc_roi.nii.gz"), emit: acc
 
     shell:
     '''
@@ -105,8 +102,105 @@ process gen_confounds{
     /scripts/confounds.py $(pwd)/!{t1} $(pwd)/!{t1_bm} $(pwd)/!{wm} $(pwd)/!{csf} \
                          $(pwd)/!{func} $(pwd)/!{func_bm} $(pwd)/!{func_json} \
                          --workdir $(pwd) $(pwd)/!{base}
+    rename 's/_confounds/_new_confounds/g' *confounds*
     '''
 
+}
+
+process update_confounds{
+
+    label 'fmriprep'
+
+    input:
+    tuple val(sub), val(base), val(ses),\
+    path(new_confounds), path(confounds)
+
+    output:
+    tuple val(sub), val(base), val(ses),\
+    path("${base}_merged_confounds.tsv"), emit: confounds
+
+    shell:
+    '''
+    #!/usr/bin/env python
+    import numpy as np
+    import pandas as pd
+
+    # Load in TSV files
+    old_tsv = pd.read_csv("!{confounds}", delimiter="\t")
+    new_tsv = pd.read_csv("!{new_confounds}", delimiter="\t")
+
+    # Rename headers in new and drop in old
+    cols = new_tsv.columns
+    new_tsv.columns = ["{}_fixed".format(c) for c in cols]
+
+    # Drop columns in old tsv
+    old_tsv.drop(columns = cols, inplace=True)
+    out = old_tsv.merge(new_tsv, left_index=True, right_index=True)
+    out.to_csv("!{base}_merged_confounds.tsv", sep="\\t")
+
+    '''
+}
+
+process update_metadata{
+
+    label 'fmriprep'
+
+    input:
+    tuple val(sub), val(base), val(ses),\
+    path(new_meta), path(meta)
+
+    output:
+    tuple val(sub), val(base), val(ses),\
+    path("${base}_merged_confounds.json"), emit: metadata
+
+    shell:
+    '''
+    #!/usr/bin/env python
+
+    import json
+
+    with open("!{meta}", "r") as f:
+        meta = json.load(f)
+
+    with open("!{new_meta}", "r") as f:
+        new_meta = json.load(f)
+
+    # Remove columns being replaced
+    cleaned_meta = {k: v for k,v in meta.items() if not (("a_comp" in k) or ("dropped" in k))}
+    out_meta = {**cleaned_meta, **new_meta}
+
+    with open("!{base}_merged_confounds.json", "w") as f:
+        json.dump(out_meta, f, indent=2)
+    '''
+}
+
+process write_to_fmriprep{
+
+    label 'fmriprep'
+    stageInMode 'copy'
+
+    publishDir path: "$params.fmriprep/$sub/$ses/func",\
+               pattern: "*tsv",\
+               saveAs: { f -> "${base}_desc-confounds_fixedregressors.tsv" },\
+               mode: 'copy'
+
+    publishDir path: "$params.fmriprep/$sub/$ses/func",\
+               pattern: "*json",\
+               saveAs: { f -> "${base}_desc-confounds_fixedregressors.json" },\
+               mode: 'copy'
+
+    input:
+    tuple val(sub), val(base), val(ses),\
+    path(confounds), path(metadata)
+
+    output:
+    tuple path(confounds), path(metadata)
+
+    shell:
+    '''
+    echo "Writing confounds to !{params.fmriprep}/!{sub}/!{ses}/func/!{base}_desc-confound_fixedregressors.tsv"
+    echo "Writing confounds to !{params.fmriprep}/!{sub}/!{ses}/func/!{base}_desc-confound_fixedregressors.json"
+    '''
 }
 
 
@@ -143,6 +237,8 @@ workflow {
     // Run fast
     fast(apply_mask.out.masked)
 
+    // There's probably a better way to gather inputs for the confounds file
+
     // Put together inputs for running confound calculation
     i_gen_confounds = input_channel
                         .join(denoise_image.out.denoised)
@@ -166,10 +262,37 @@ workflow {
                         .map{sub,ses,t,tbm,wm,csf,fmri,fbm,base ->
                             [
                                 sub,ses,t,tbm,wm,csf,fmri,fbm,
-                                fmri.replaceFirst(/nii.gz/, "json"),
+                                fmri.toString().replaceFirst(/nii.gz/, "json"),
                                 base
                             ]}
 
     gen_confounds(i_gen_confounds)
+
+    // Operations to pull off:
+    // 1 - A tag identification mark
+
+    // Next extract the confounds file
+    basenames = i_gen_confounds.map{sub,ses,t,tbm,wm,csf,fmri,fbm,js,base ->
+                                            [sub,base,ses,
+                                            "${params.fmriprep}/${sub}/${ses}/func/"]
+                                   }
+
+    i_update_confounds = basenames.join(gen_confounds.out.confounds, by: [0,1])
+                                  .map{sub,base,ses,funcp,conf ->
+                                  [sub,base,ses,conf,
+                                  "${funcp}/${base}_desc-confounds_regressors.tsv"
+                                  ]}
+    update_confounds(i_update_confounds)
+
+    i_update_metadata = basenames.join(gen_confounds.out.confounds_metadata, by: [0,1])
+                                  .map{sub,base,ses,funcp,meta ->
+                                  [sub,base,ses,meta,
+                                  "${funcp}/${base}_desc-confounds_regressors.json"
+                                  ]}
+    update_metadata(i_update_metadata)
+
+    i_write_to_fmriprep = update_confounds.out.confounds
+                            .join(update_metadata.out.metadata, by: [0,1,2])
+    write_to_fmriprep(i_write_to_fmriprep)
 
 }
