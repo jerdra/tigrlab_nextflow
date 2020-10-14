@@ -129,14 +129,28 @@ process update_confounds{
     old_tsv = pd.read_csv("!{confounds}", delimiter="\t")
     new_tsv = pd.read_csv("!{new_confounds}", delimiter="\t")
 
-    # Rename headers in new and drop in old
+    # Calculate derivates and powers
+    deriv_cols = ["white_matter", "csf"]
+    for d in deriv_cols:
+        deriv_name = d + "_derivative1"
+        sq_name = d + "_power2"
+        deriv_sq_name = d + "_derivative1_power2"
+        new_tsv[deriv_name] = new_tsv[d].diff()
+        new_tsv[sq_name] = new_tsv[d] ** 2
+        new_tsv[deriv_sq_name] = new_tsv[deriv_name]**2
+
+    # Rename heads in
     cols = new_tsv.columns
     new_tsv.columns = ["{}_fixed".format(c) for c in cols]
 
+    # Drop component based columns in old CSV
+    drop_cols = [c for c in old_tsv.columns if "a_comp_cor" in c.lower()]
+    old_tsv.drop(columns = drop_cols, inplace=True)
+
     # Drop columns in old tsv
-    old_tsv.drop(columns = cols, inplace=True)
+    old_tsv.drop(columns = cols, inplace=True, errors="ignore")
     out = old_tsv.merge(new_tsv, left_index=True, right_index=True)
-    out.to_csv("!{base}_merged_confounds.tsv", sep="\\t")
+    out.to_csv("!{base}_merged_confounds.tsv", sep="\\t", index=False)
 
     '''
 }
