@@ -17,6 +17,7 @@ OPTIONAL
 			($subjects)
 	--rewrite	Don't skip subjects with existing output data
 			($rewrite)
+	--dump_masks	Dump masks into a given directory
 	--fmriprep_img	Container to use
 			($fmriprep_img)
 	--help		Print this usage log

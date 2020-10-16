@@ -7,7 +7,8 @@ bindings = ["fmriprep": params.fmriprep,
             "fmriprep_img": params.fmriprep_img,
             "subjects": params.subjects,
             "rewrite": params.rewrite,
-            "fmriprep_img":params.fmriprep_img
+            "fmriprep_img":params.fmriprep_img,
+            "dump_masks":params.dump_masks
             ]
 
 toprint = engine.createTemplate(usage.text).make(bindings)
@@ -118,6 +119,9 @@ process update_confounds{
     output:
     tuple val(sub), val(base), val(ses),\
     path("${base}_merged_confounds.tsv"), emit: confounds
+    tuple val(sub), val(base), path("*wm_roi.nii.gz"), emit: wm
+    tuple val(sub), val(base), path("*csf_roi.nii.gz"), emit: csf
+    tuple val(sub), val(base), path("*acc_roi.nii.gz"), emit: acc
 
     shell:
     '''
@@ -152,6 +156,27 @@ process update_confounds{
     out = old_tsv.merge(new_tsv, left_index=True, right_index=True)
     out.to_csv("!{base}_merged_confounds.tsv", sep="\\t", index=False)
 
+    '''
+}
+
+process dump_masks{
+
+    publishDir path: "$params.dump_masks",\
+               pattern: "*.nii.gz",\
+               saveAs: { f -> "${base}_${f}" },\
+               mode: 'copy'
+
+
+    input:
+    tuple val(sub), val(base),\
+    path(csf), path(wm), path(acc)
+
+    output:
+    tuple path("csf.nii.gz"), path("wm.nii.gz"), path("acc.nii.gz")
+
+    shell:
+    '''
+    echo "Dumping !{base} ROIs into !{params.dump_masks}"
     '''
 }
 
@@ -308,5 +333,12 @@ workflow {
     i_write_to_fmriprep = update_confounds.out.confounds
                             .join(update_metadata.out.metadata, by: [0,1,2])
     write_to_fmriprep(i_write_to_fmriprep)
+
+    if (params.dump_masks){
+        i_dump_masks = gen_confounds.out.csf
+                                .join(gen_confounds.out.wm)
+                                .join(gen_confounds.out.acc)
+        dump_masks(i_dump_masks)
+    }
 
 }
