@@ -13,3 +13,5 @@ docs/build
 .nextflow*
 tests
 .nfs*
+__pycache__
+*.pyc
