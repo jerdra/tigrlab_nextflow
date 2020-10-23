@@ -1,0 +1,31 @@
+fMRIPrep Confound Calculation Nextflow Pipeline
+=============================
+
+Re-run the confounds workflow using a denoised strategy using TIGR-PURR
+
+USAGE
+
+nextflow run recalculate_confounds.nf [options...] -c <CONFIG> --fmriprep <FMRIPREP_DIR>
+
+DESCRIPTION
+	-c		Path to Nextflow Config file specifying pipeline configuration
+	--fmriprep	Path to fMRIPrep derivatives
+			($fmriprep)
+
+OPTIONAL
+	--subjects	List of subjects text file to run
+			($subjects)
+	--rewrite	Don't skip subjects with existing output data
+			($rewrite)
+	--dump_masks	Dump masks into a given directory
+	--fmriprep_img	Container to use
+			($fmriprep_img)
+	--help		Print this usage log
+
+SUPPORTED PROFILES
+	-profile kimel	Run on Kimel cluster
+	-profile scc	Run on SCC cluster
+	-profile local	Run on local cluster
+
+NOTES
+Will run into the fMRIPrep directory by creating files denoted with the desc-confounds_regressors_fixed.tsv.
