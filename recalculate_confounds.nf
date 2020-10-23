@@ -119,9 +119,6 @@ process update_confounds{
     output:
     tuple val(sub), val(base), val(ses),\
     path("${base}_merged_confounds.tsv"), emit: confounds
-    tuple val(sub), val(base), path("*wm_roi.nii.gz"), emit: wm
-    tuple val(sub), val(base), path("*csf_roi.nii.gz"), emit: csf
-    tuple val(sub), val(base), path("*acc_roi.nii.gz"), emit: acc
 
     shell:
     '''
@@ -163,7 +160,6 @@ process dump_masks{
 
     publishDir path: "$params.dump_masks",\
                pattern: "*.nii.gz",\
-               saveAs: { f -> "${base}_${f}" },\
                mode: 'copy'
 
 
@@ -172,7 +168,7 @@ process dump_masks{
     path(csf), path(wm), path(acc)
 
     output:
-    tuple path("csf.nii.gz"), path("wm.nii.gz"), path("acc.nii.gz")
+    tuple path(csf), path(wm), path(acc)
 
     shell:
     '''
@@ -336,8 +332,8 @@ workflow {
 
     if (params.dump_masks){
         i_dump_masks = gen_confounds.out.csf
-                                .join(gen_confounds.out.wm)
-                                .join(gen_confounds.out.acc)
+                                .join(gen_confounds.out.wm, by: [0,1])
+                                .join(gen_confounds.out.acc, by: [0,1])
         dump_masks(i_dump_masks)
     }
 
