@@ -1,0 +1,27 @@
+n4 Nextflow Pipeline
+=============================
+
+Run a supported BIDS-app using TIGR-PURR
+
+USAGE
+
+nextflow run n4.nf [options...] -c <CONFIG> --bids <BIDS> --out <OUT>
+
+DESCRIPTION
+	--study		Datman study ID
+	--out		Output directory
+
+OPTIONAL
+	--bspline	N4 bspline distance
+			($bspline)
+	--niter		N4 iterations
+			([${niter}x${niter}x${niter}x${niter}x${niter}])
+	--rewrite	Overwrite existing subject output directories
+			($rewrite)
+	--subjects	Textfile containing list of subjects to process
+	--help		Print this usage log
+
+SUPPORTED PROFILES
+	-profile kimel	Run on Kimel cluster
+	-profile scc	Run on SCC cluster
+	-profile local	Run on local cluster

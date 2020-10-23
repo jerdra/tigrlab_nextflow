@@ -1,0 +1,22 @@
+FeenICS Nextflow Pipeline
+=============================
+
+Run the FeenICS SPRL cleaning pipeline on a set of Datman subjects
+
+USAGE
+
+nextflow run feenics.nf [options...] -c <CONFIG>  --study STUDY --out OUTDIR
+
+ARGUMENTS
+	-c		Nextflow configuration file for FeenICS
+	--study		Datman study ID
+	--out		Output directory
+
+OPTIONAL
+	--rewrite	Overwrite existing output directories
+			($rewrite)
+	--preartifact	Text file containing a list of subjects to skip
+			FeenICS on ($preartifact)
+	--simg		Container to use
+			($simg)
+	--help		Print this usage log

@@ -65,6 +65,7 @@ In this quickstart tutorial we'll be running a **Dry-run** of MRIQC on a bunch o
 
         See :ref:`dryrun' for more details about using a dry-run
 
+
 Running the pipeline
 ======================
 
