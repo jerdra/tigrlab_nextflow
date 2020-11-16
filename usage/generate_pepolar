@@ -20,7 +20,7 @@ COMMAND-LINE OPTIONAL
 	--subjects	A path to a text file containing a list of subjects to run
 			for a given datman study
 	--sbref_tag	Datman tag to use to identify SBRef files
-			($sbref-tag)
+			($sbref_tag)
 
 CONFIGURATION SPEC
 	--bold_tags	Groovy list of BOLD tags to search for within study
