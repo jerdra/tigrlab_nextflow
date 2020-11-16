@@ -1,0 +1,28 @@
+Generate Pepolar Nextflow Pipeline
+=============================
+
+Generate TOPUP PEPOLAR images from EPI scans.
+
+USAGE
+
+nextflow run generate_pepolar.nf [options...] -c <CONFIG>  --study STUDY --out OUTDIR
+
+ARGUMENTS
+	-c		Nextflow configuration file(s) for generating pepolar images.
+	--study		Datman study ID
+	--out		Output directory
+
+COMMAND-LINE OPTIONAL
+	--rewrite	Overwrite existing output directories
+			($rewrite)
+	--usebold	If SBRef scans don't exist, generate PEPOLAR images
+			from first BOLD volume
+	--subjects	A path to a text file containing a list of subjects to run
+			for a given datman study
+	--sbref_tag	Datman tag to use to identify SBRef files
+			($sbref_tag)
+
+CONFIGURATION SPEC
+	--bold_tags	Groovy list of BOLD tags to search for within study
+
+NOTE: Configuration file(s) provided for by -c can be used to spec all/some of the parameters required. "-c" can be used multiple times to combine multiple configuration files.
