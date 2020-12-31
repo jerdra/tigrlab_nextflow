@@ -1,6 +1,6 @@
 nextflow.preview.dsl = 2
 
-usage = file("${workflow.scriptFile.getParent()}/usage/recalculate_confounds")
+usage = file("${baseDir.getParent()}/usage/recalculate_confounds")
 engine = new groovy.text.SimpleTemplateEngine()
 
 bindings = ["fmriprep": params.fmriprep,

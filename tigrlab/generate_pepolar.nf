@@ -1,6 +1,6 @@
 nextflow.preview.dsl = 2
 
-usage = file("${workflow.scriptFile.getParent()}/usage/generate_pepolar")
+usage = file("${baseDir.getParent()}/usage/generate_pepolar")
 engine = new groovy.text.SimpleTemplateEngine()
 
 bindings = [

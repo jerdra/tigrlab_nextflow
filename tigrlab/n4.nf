@@ -1,6 +1,6 @@
 nextflow.preview.dsl = 2
 
-usage = file("${workflow.scriptFile.getParent()}/usage/n4_usage")
+usage = file("${baseDir.getParent()}/usage/n4_usage")
 bindings = [ "rewrite":"$params.rewrite",
              "bspline":"$params.bspline",
              "niter":"$params.niter",
