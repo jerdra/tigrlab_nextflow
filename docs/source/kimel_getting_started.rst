@@ -1,7 +1,7 @@
 .. _getting_started:
 
 --------------------
-Getting started
+KIMEL Lab User's Guide
 --------------------
 
 In this section, we'll begin with where you can find regularly running standard BIDS pipelines. Then we will discuss how you can run your own standard pipeline (for example if you wanted outputs for a specific dataset quickly, although careful with space usage!). Finally we'll go over how you can customize arguments for either the BIDS application you want to run or SLURM if your requirements are more complex. 

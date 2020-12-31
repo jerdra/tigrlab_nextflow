@@ -2,7 +2,7 @@
 
 
 -------------------------------------------
-TIGR-PURR Quickstart Tutorial
+TIGR-PURR Quickstart Tutorial for Kimel Lab Members
 -------------------------------------------
 
 This tutorial is meant to run you through a simple example of running TIGR-PURR pipelines on your computer using data from our internal SPINS study.
