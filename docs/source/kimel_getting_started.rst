@@ -53,7 +53,7 @@ b. How to submit the job to SLURM (across different systems) if needed.
 
 **Default Pipeline** configuration files will always be found in::
 
-        /archive/code/TIGR_PURR/nextflow_config
+        /archive/code/TIGR_PURR/config
 
 Here you will find a bunch of files that look like the following::
 
@@ -67,7 +67,7 @@ Every **Nextflow Configuration** file ends with a ``*.nf.config`` and always beg
 Let's say we want to run the ``mriqc-0.14.2`` pipeline. Then running the pipeline is done with the following command::
 
         nextflow /archive/code/tigrlab_nextflow/bids.nf \
-        -c /archive/code/tigrlab_nextflow/nextflow_config/mriqc-0.14.2.nf.config \
+        -c /archive/code/tigrlab_nextflow/config/mriqc-0.14.2.nf.config \
         --bids <bids_dir> --out <output_dir> 
 
 

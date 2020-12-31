@@ -1,15 +1,15 @@
-.. _quick_reference:
+.. _kimel_quick_reference:
 
 
 ----------------------------------------
-Quick Reference Guide to Pipeline Usage
+Kimel Quick Reference Guide to Pipeline Usage
 ----------------------------------------
 
 This is a quick reference guide to some information surrounding outputs of our default pipelines and how to use TIGR-PURR. 
 
 Before running any TIGR-PURR pipeline please load the following module::
 
-        python/3.6.3-boutiques-0.5.20
+        nextflow/20.10.0
 
 
 Default Pipeline Outputs
@@ -40,7 +40,7 @@ Running a subset of subjects
 The ``--subjects`` flag allows you to specify a text-file containing **one subject per-line**::
 
         nextflow /archive/code/tigrlab_nextflow/bids.nf \
-        -c <nextflow_config_file> \
+        -c <config_file> \
         --bids <path_to_bids_dir> \
         --out <path_to_output> \
         --subjects <path_to_subject_list_text_file>
@@ -51,7 +51,7 @@ Using custom BIDS-app arguments
 Make an **invocation JSON** and supply it via the ``--invocation`` flag::
 
         nextflow /archive/code/tigrlab_nextflow/bids.nf \
-        -c <nextflow_config_file> \
+        -c <config_file> \
         --bids <path_to_bids_dir> \
         --out <path_to_output> \
         --invocation <path_to_invocation_json>
@@ -67,7 +67,7 @@ By default TIGR-PURR submits to high-moby jobs on the local Kimel cluster. To us
 
 
         nextflow /archive/code/tigrlab_nextflow/bids.nf \
-        -c <nextflow_config_file> \
+        -c <config_file> \
         --bids <path_to_bids_dir> \
         --out <path_to_output> \
         -profile {scc,kimel,local}

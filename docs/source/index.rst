@@ -25,10 +25,23 @@ However, TIGR-PURR can be configured to run *on any cluster set-up with just sma
 Guides
 =======
 
+Kimel Lab Guides
+################
+
 If you're a Kimel Lab member at CAMH, then the standard configuration packaged with TIGR_PURR will be sufficient for your use-case. See the following guides to get started:
 
 - :ref:`kimel_getting_started`
 - :ref:`kimel_quickstart_tutorial`
+- :ref:`kimel_quick_reference`
+
+General User Guide
+##################
+
+The following documentation is non-specific towards compute infrastructure and provides information on general configuration and set-up.
+
+- :ref:`setup_guide`
+- :ref:`extension`
+
 
 .. toctree::
    :maxdepth: 2
@@ -36,7 +49,7 @@ If you're a Kimel Lab member at CAMH, then the standard configuration packaged w
 
    kimel_getting_started
    kimel_quickstart_tutorial
-   quick_reference
+   kimel_quick_reference
    not_bids
    features
    changelog

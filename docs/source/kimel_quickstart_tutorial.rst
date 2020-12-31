@@ -67,7 +67,7 @@ Running the pipeline
 Once you have a BIDS-app, subject list, and invocation ready to go you can run a pipeline! Let's run it on the local system (your own computer) first, but feel free to try other profiles!::
 
         nextflow /archive/code/tigrlab_nextflow/bids.nf \
-                -c /archive/code/tigrlab_nextflow/nextflow_config/mriqc-0.14.2.nf.config \
+                -c /archive/code/tigrlab_nextflow/config/mriqc-0.14.2.nf.config \
                 --bids /archive/data/SPINS/data/bids \
                 --out /scratch/<YOU>/nextflow_quickstart \
                 --subjects /scratch/<YOU>/nextflow_quickstart/sublist \
