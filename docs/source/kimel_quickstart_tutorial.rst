@@ -37,7 +37,7 @@ The sublist text file will contain a list of participants (one-per-line) that we
 
 Finally, load in the **Nextflow** module::
 
-        module load nextflow/19.04.1
+        module load nextflow/20.10.0
 
 
 .. note::
@@ -59,11 +59,6 @@ Dry-Runs of Pipelines
 =================================================================
 
 In this quickstart tutorial we'll be running a **Dry-run** of MRIQC on a bunch of participants from the SPINS study located in the archive. A dry-run is a way of running pipelines without doing actual computation. 
-
-
-.. note::
-
-        See :ref:`dryrun' for more details about using a dry-run
 
 
 Running the pipeline
