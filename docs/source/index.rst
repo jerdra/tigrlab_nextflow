@@ -34,7 +34,7 @@ If you're a Kimel Lab member at CAMH, then the standard configuration packaged w
    :maxdepth: 2
    :caption: Contents 
 
-   kimel_users_guide
+   kimel_getting_started
    kimel_quickstart_tutorial
    quick_reference
    not_bids
