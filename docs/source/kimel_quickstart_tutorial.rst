@@ -1,4 +1,4 @@
-.. _quickstart_tutorial:
+.. _kimel_quickstart_tutorial:
 
 
 -------------------------------------------

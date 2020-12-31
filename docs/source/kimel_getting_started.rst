@@ -1,4 +1,4 @@
-.. _getting_started:
+.. _kimel_getting_started:
 
 --------------------
 KIMEL Lab User's Guide
