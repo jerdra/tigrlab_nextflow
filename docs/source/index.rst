@@ -20,7 +20,7 @@ Currently, TIGR-PURR is set up to natively support the following cluster configu
 * Scinet's Niagara Cluster (soon)!
 * Your local computer
 
-However, TIGR-PURR can be configured to run *on any cluster set-up with just small tweaks to configuration!*. See :ref:`adapting_tigrpurr` for a short-guide on how you can use TIGR-PURR with alternative compute infrastructure.
+However, TIGR-PURR can be configured to run *on any cluster set-up with just small tweaks to configuration!*. See :ref:`setup_guide` for a short-guide on how you can use TIGR-PURR with alternative compute infrastructure.
 
 Guides
 =======
@@ -40,16 +40,14 @@ General User Guide
 The following documentation is non-specific towards compute infrastructure and provides information on general configuration and set-up.
 
 - :ref:`setup_guide`
-- :ref:`extension`
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents 
 
+   install_and_configure
    kimel_getting_started
    kimel_quickstart_tutorial
    kimel_quick_reference
    not_bids
-   features
-   changelog
