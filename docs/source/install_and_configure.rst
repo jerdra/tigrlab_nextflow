@@ -1,31 +1,39 @@
 .. _setup_guide:
 
 --------------------
-TIGR-PURR Set-up Guide
+TIGR-PURR Installation and Configuration
 --------------------
+
+This is a detailed instructional on how to configure TIGR-PURR for your system. For a minimal walkthrough of TIGR-PURR setup using an example BIDS-application see the :ref:`minimal_setup`.
 
 
 Installation
 ============
 
-Since TIGR-PURR's main BIDS-app functionality relies heavily on the use of Singularity containers to deploy jobs, the installation requirements are minimal. TIGR-PURR requires the user to be inside a :code:`Python 3.6+` environment with :code:`boutiques>=0.5.25`. A `requirements.txt <https://github.com/jerdra/TIGR_PURR/blob/master/requirements.txt>`_ file is provided. Minimal set-up can be done via the following::
+Since TIGR-PURR's main BIDS-app functionality relies heavily on the use of Singularity containers to deploy jobs, the installation requirements are minimal. TIGR-PURR requires the user to be inside a :code:`Python 3.6+` environment with :code:`boutiques>=0.5.25`. A `requirements.txt <https://github.com/jerdra/TIGR_PURR/blob/master/requirements.txt>`_ file is provided. Minimal set-up can be done via the following:
+
+.. code-block:: bash
 
         git clone https://github.com/jerdra/TIGR_PURR.git
         cd TIGR_PURR
         pip install -r requirements.txt
         curl -s https://get.nextflow.io | bash
 
-Setting up Boutiques
+`Singularity <https://sylabs.io/guides/3.0/user-guide/quick_start.html>`_ is an additional requirement. If using a compute system you will need to ask the System administrator to install singularity. If using locally, then please follow the documentation provided on Singularity's website
+
+Boutiques
 ====================
 
-TIGR-PURR uses `Boutiques <https://boutiques.github.io>`_ in order to provide a homogenous command-line interface for running BIDS applications. When constructing a **Boutiques Invocation file the following paths must be used**::
+TIGR-PURR uses `Boutiques <https://boutiques.github.io>`_ in order to provide a homogenous command-line interface for running BIDS applications. When constructing a **Boutiques Invocation file the following paths must be used**
+
+.. code-block:: json
 
             {
-                <bids_dir_arg>:"/bids",
-                <output_dir_arg>:"/output",
-                <work_dir_arg>:"/work",
-                <freesurfer_license_file_arg>:"/license"
-                ...
+                "<bids_dir_arg>":"/bids",
+                "<output_dir_arg>":"/output",
+                "<work_dir_arg>":"/work",
+                "<freesurfer_license_file_arg>":"/license",
+                "<more_args>":"..." 
             }
 
 TIGR-PURR by default binds the aforementioned directories to a fixed set of mounting points within any Singularity container called.
@@ -50,11 +58,6 @@ The following sections provide information needed to configure TIGR-PURR on new 
 - :code:`_cluster_config_`  - setting up TIGR-PURR to run on additional compute infrastructures
 - :code:`_pipeline_extensions_` - adding new BIDS-app pipelines to TIGR-PURR
 
-
-.. _config_setup:
-
-TIGR-PURR Configuration Setup
-#############################
 
 Thanks to Nextflow, the configuration for TIGR-PURR is incredibly simple. In this section we show how `bids.nf`, the core run-script of TIGR-PURR, reads configuration files for deployment onto compute clusters. The following configuration files are core to `bids.nf`:
 
@@ -81,7 +84,7 @@ Pipeline configuration files provided in the `TIGR-PURR repository <https://gith
 
 
 How do Configuration Files Link Together?
-********************************************
+############################################
 
 A core question is **how these configuration files are linked together when running `bids.nf`**? The basic workflow is as follows:
 
@@ -97,9 +100,11 @@ We describe the roles and requirements of the core configuration files in the fo
 .. _pipeline_extensions:
 
 Pipeline Configuration File
-****************************
+############################
 
-The :code:`<pipeline_name>-<pipeline_version>.nf.config` provides a number of settings which tells TIGR-PURR which pipeline to launch and with which arguments. The configuration file has the following structure (this is from `config/TEMPLATE.nf.config`)::
+The :code:`<pipeline_name>-<pipeline_version>.nf.config` provides a number of settings which tells TIGR-PURR which pipeline to launch and with which arguments. The configuration file has the following structure (this is from `config/TEMPLATE.nf.config`):
+
+.. code-block:: groovy
 
                 application="Name of application being run"
                 version="Version of pipeline"
@@ -118,14 +123,16 @@ To set up a *new pipeline* to run on TIGR-PURR, all that is needed is a configur
 
 
 Dynamic time allocation with `cluster_time`
-""""""""""""""""""""""""""""""""""""""""""""
+********************************************
 
 BIDS-applications may vary their run-time based on the number of sessions (i.e Freesurfer Longitudinal). As a result :code:`cluster_time` is allowed some flexibility, allowable values are:
 
 - A constant :code:`string` value representing the time required (i.e "24:00:00")
 - A Groovy :code:`closure` function of form :code:`{ s -> ... }`
 
-In the latter case :code:`s` represents the number of sessions for a given BIDS subject. This can be used to scale the run-time based on the number of sessions within a subject's BIDS folder. For example::
+In the latter case :code:`s` represents the number of sessions for a given BIDS subject. This can be used to scale the run-time based on the number of sessions within a subject's BIDS folder. For example:
+
+.. code-block:: groovy
 
         cluster_time = { s-> return "${24*s}:00:00" }
 
@@ -135,7 +142,7 @@ Here :code:`cluster_time` scales such that each session within a subject folder 
 .. _bids_config:
 
 Core Configuration File
-************************
+########################
 
 The core configuration file plays a simple role in the deployment of :code:`bids.nf` jobs:
 
@@ -154,9 +161,11 @@ For the most part this file will not need to be modified.
 .. _cluster_config:
 
 Deployment Configuration
-*************************
+#########################
 
-The :code:`profiles.nf.config` file provides the ability to set up profiles referenced by the :code:`-profile` command-line option. The following scope is defined in :code:`profiles.nf.config`::
+The :code:`profiles.nf.config` file provides the ability to set up profiles referenced by the :code:`-profile` command-line option. The following scope is defined in :code:`profiles.nf.config`:
+
+.. code-block:: groovy
 
             profiles {
 
@@ -177,15 +186,19 @@ Additional profiles can be added by specifying an additional profile under :code
 
 
 The :code:`params.cluster_queue` option
-"""""""""""""""""""""""""""""""""""""""
+***************************************
 
-:code:`params.cluster_queue` must be of type of Groovy :code:`closure` of the form::
+:code:`params.cluster_queue` must be of type of Groovy :code:`closure` of the form:
+
+.. code-block:: groovy
 
             params.cluster_queue = { t -> ... }
 
 The :code:`t` parameter passed in is :code:`params.cluster_time`. This can be used to implement flexible selection of cluster partitions based on the time requested. :code:`profile.nf.config` provides a helper function :code:`get_queue` which can be used with a :code:`dictionary`. Here's an example usage:
 
-In :code:`profile.nf.config`::
+In :code:`profile.nf.config`:
+
+.. code-block:: groovy
 
             // Define mapping table
             partition_map = ["12:00:00": "short",
@@ -217,4 +230,7 @@ The :code:`get_queue` function provided in :code:`profile.nf.config` picks the p
 
         See `Nextflow Configuration <https://www.nextflow.io/docs/latest/config.html>`_
         for more technical details on :code:`.nf.config` configuration files
+
+
+.. _minimal-setup:
 
