@@ -25,6 +25,9 @@ OPTIONAL
 			($invocation)
 	--license	Freesurfer license to use
 			($license)
+	--resources Resource directory to bind if existing file paths are specified
+				as inputs to the invocation JSON
+				($resources)
 	--help		Print this usage log
 
 SUPPORTED PROFILES
@@ -35,3 +38,5 @@ SUPPORTED PROFILES
 NOTES
 The Nextflow configuration file specified by -c determines the BIDS-app and version to run
 All optional parameters are defaulted by the configuration file (-c) specified
+
+With respect to --resources. When bosh executes within a singularity container with an invocation JSON which specifies existing files as inputs, it does not automatically bind and resolve file paths for you. As a result any additional input files should be placed in a generic resources directory. Supplying --resources <path_to_resources> will cause TIGR-PURR to bind <path_to_resources> to "/resources/" within the container called by bosh.

@@ -7,7 +7,9 @@ bindings = [ "rewrite":"$params.rewrite",
              "simg":"$params.simg",
              "descriptor":"$params.descriptor",
              "invocation":"$params.invocation",
-             "license":"$params.license"]
+             "license":"$params.license",
+             "resources": "$params.resources"]
+
 engine = new groovy.text.SimpleTemplateEngine()
 toprint = engine.createTemplate(usage.text).make(bindings)
 printhelp = params.help
@@ -133,6 +135,7 @@ process run_bids{
     -v !{params.bids}:/bids \
     -v !{params.out}:/output \
     -v !{params.license}:/license \
+    !{ (params.resources) ? "-v $params.resources:/resources" : ""} \
     -v $(pwd)/work:/work \
     !{params.descriptor} $(pwd)/!{sub_input} \
     --imagepath !{params.simg} -x --stream 2>> ${log_out} \
