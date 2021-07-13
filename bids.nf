@@ -104,7 +104,6 @@ process run_bids{
     input:
     tuple path(sub_input), val(s)
 
-    beforeScript "source /etc/profile"
     scratch params.scratchDir
     stageInMode 'copy'
 
